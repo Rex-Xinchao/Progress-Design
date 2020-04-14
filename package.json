@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "core-js": "^3.6.4",
-    "jquery": "^3.5.0",
     "jsplumb": "^2.13.1",
     "vue": "^2.6.11"
   },
