@@ -23,12 +23,26 @@ const ConnectorStyle = {
     strokeWidth: 3
   },
   connectorOverlays: [
+    ["Arrow", { width: 10, length: 10, location: 1 }],
     [
-      "Arrow",
+      "Custom",
       {
-        width: 10,
-        length: 10,
-        location: 1
+        create: () => {
+          let newDiv = document.createElement("div");
+          let newInput = document.createElement("input");
+          let newSpan = document.createElement("span");
+          newDiv.setAttribute("class", "label-container");
+          newInput.setAttribute("class", "label-input");
+          newInput.setAttribute("value", "标签");
+          newSpan.innerHTML = "标签";
+          newDiv.onchange = e => {
+            newSpan.innerHTML = e.target.value;
+          };
+          newDiv.appendChild(newSpan);
+          newDiv.appendChild(newInput);
+          return newDiv;
+        },
+        location: 0.5
       }
     ]
   ]
@@ -170,5 +184,42 @@ export default {
   width: 200px;
   height: 200px;
   border: 1px solid #cccccc;
+}
+</style>
+<style lang="scss">
+.label-container {
+  width: auto;
+  background-color: rgba(255, 255, 255, 0);
+  border: none;
+  position: relative;
+  font-size: 14px;
+  font-weight: normal;
+  text-align: center;
+  line-height: 28px;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 1);
+    border: 1px solid #cccc;
+  }
+
+  span {
+    display: inline-block;
+    min-width: 80px;
+    height: 100%;
+    color: rgba(0, 0, 0, 0);
+  }
+
+  .label-input {
+    display: inline-block;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    padding: 0;
+    margin: 0;
+    outline: none;
+    border: none;
+    background-color: rgba(255, 255, 255, 0);
+  }
 }
 </style>
