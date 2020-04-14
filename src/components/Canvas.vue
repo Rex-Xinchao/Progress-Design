@@ -4,67 +4,52 @@
       <li @click="edit">编辑</li>
       <li @click="remove">删除</li>
     </ul>
+    <div class="save-btn" @click="saveProgress">保存</div>
   </div>
 </template>
 
 <script>
-const PaintStyle = {
-  paintStyle: {
-    stroke: "lightblue",
-    fill: "lightblue",
-    radius: 6,
-    lineWidth: 2
-  },
-  hoverPaintStyle: { stroke: "blue" }
-};
-const ConnectorStyle = {
-  connectorStyle: {
-    stroke: "lightgray",
-    strokeWidth: 3
-  },
-  connectorOverlays: [
-    ["Arrow", { width: 10, length: 10, location: 1 }],
-    [
-      "Custom",
-      {
-        create: () => {
-          let newDiv = document.createElement("div");
-          let newInput = document.createElement("input");
-          let newSpan = document.createElement("span");
-          newDiv.setAttribute("class", "label-container");
-          newInput.setAttribute("class", "label-input");
-          newInput.setAttribute("value", "标签");
-          newSpan.innerHTML = "标签";
-          newDiv.onchange = e => {
-            newSpan.innerHTML = e.target.value;
-          };
-          newDiv.appendChild(newSpan);
-          newDiv.appendChild(newInput);
-          return newDiv;
-        },
-        location: 0.5
-      }
-    ]
-  ]
-};
-const Common = {
-  isSource: true,
-  isTarget: true,
-  connector: [
-    "Flowchart",
-    { gap: 10, cornerRadius: 5, alwaysRespectStubs: true }
-  ],
-  maxConnections: -1,
-  ...PaintStyle,
-  ...ConnectorStyle
-};
-
 export default {
   name: "Canvas",
   data() {
+    const vm = this;
     return {
       dom: null,
-      showTip: false
+      showTip: false,
+      nodeData: [],
+      linkData: [],
+      Common: {
+        isSource: true,
+        isTarget: true,
+        maxConnections: -1,
+        // 端点样式
+        paintStyle: {
+          stroke: "lightblue",
+          fill: "lightblue",
+          radius: 6,
+          lineWidth: 2
+        },
+        hoverPaintStyle: { stroke: "blue" },
+        // 连线样式
+        connector: [
+          "Flowchart",
+          { gap: 10, cornerRadius: 5, alwaysRespectStubs: true }
+        ],
+        connectorStyle: {
+          stroke: "lightgray",
+          strokeWidth: 3
+        },
+        connectorOverlays: [
+          ["Arrow", { width: 10, length: 10, location: 1 }],
+          [
+            "Custom",
+            {
+              create: vm.createLabel,
+              location: 0.5
+            }
+          ]
+        ]
+      }
     };
   },
   props: {
@@ -77,20 +62,47 @@ export default {
     }
   },
   methods: {
+    saveProgress() {
+        console.log(this.linkData)
+        console.log(this.nodeData)
+    },
     createEndPonit(id) {
       if (["start", "progress"].indexOf(this.type) >= 0) {
         this.$jsPlumb.addEndpoint(id, {
           anchors: "Bottom",
-          ...Common
+          ...this.Common
         });
       }
       if (["end", "progress"].indexOf(this.type) >= 0) {
         this.$jsPlumb.addEndpoint(id, {
           anchors: "Top",
-          ...Common
+          ...this.Common
         });
       }
       this.$jsPlumb.draggable(id);
+    },
+    createLabel(e) {
+        // todo 有时会获取到的是端点的id，而不是标签的id
+        // todo node里面要记录端点的id和位置
+      let sourceId = e.sourceId
+    //   let targetId = e.targetId
+      let newDiv = document.createElement("div");
+      let newInput = document.createElement("input");
+      let newSpan = document.createElement("span");
+      newDiv.setAttribute("class", "label-container");
+      newDiv.setAttribute("target", e.target.id);
+      newDiv.setAttribute("source", e.source.id);
+      newInput.setAttribute("class", "label-input");
+      newInput.setAttribute("value", "标签");
+      newSpan.innerHTML = "标签";
+      newDiv.onchange = e => {
+        let node = this.linkData.find(data => data.source === sourceId )
+        node.label = e.target.value
+        newSpan.innerHTML = e.target.value;
+      };
+      newDiv.appendChild(newSpan);
+      newDiv.appendChild(newInput);
+      return newDiv;
     },
     dragOver(e) {
       e.preventDefault();
@@ -114,6 +126,10 @@ export default {
       };
       document.getElementById("canvas-main").appendChild(dom);
       this.createEndPonit(id);
+      this.nodeData.push({
+        id: id,
+        name: dom.innerHTML
+      });
     },
     showTips(e) {
       this.showTip = true;
@@ -131,9 +147,15 @@ export default {
   mounted() {
     this.$jsPlumb.ready(() => {
       this.$jsPlumb.setContainer("canvas-main");
-      this.$jsPlumb.bind("beforeDrop", function(info) {
-        // 不允许自己与自己连线
-        return info.sourceId !== info.targetId; // 链接会自动建立
+      this.$jsPlumb.bind("beforeDrop", info => {
+        return info.sourceId !== info.targetId;
+      });
+      this.$jsPlumb.bind("connection", data => {
+        this.linkData.push({
+          target: data.target.id,
+          source: data.source.id,
+          label: "标签"
+        });
       });
     });
     document.body.onclick = () => {
@@ -177,6 +199,20 @@ export default {
         border: none;
       }
     }
+  }
+
+  .save-btn {
+    width: 60px;
+    line-height: 32px;
+    background-color: red;
+    border-radius: 4px;
+    border: none;
+    color: white;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    text-align: center;
+    cursor: pointer;
   }
 }
 .item {
