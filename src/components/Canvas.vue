@@ -219,6 +219,7 @@ export default {
     margin: 0;
     outline: none;
     border: none;
+    text-align: center;
     background-color: rgba(255, 255, 255, 0);
   }
 }
